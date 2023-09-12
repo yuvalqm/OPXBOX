@@ -30,7 +30,7 @@ max_ray_age = 2  # s
 ray_spawn_delay = 0.1  # s
 
 # Number of pillars to be spawned
-N_pillars = 2  # 1
+N_pillars = 10  # 1
 
 # radius of the pillars
 R_pillar = field_size * 0.075  # V
@@ -70,7 +70,7 @@ input_probe_voltage = .5  # V
 # Define additional game parameters
 gravity = 0.1  # Adjust gravity to control the bird's fall speed
 flap_force = -0.1  # Adjust flap_force to control the bird's jump height
-pillar_speed = 0.1  # Adjust pillar_speed to control the pillar's horizontal speed
+pillar_speed = 0.5  # Adjust pillar_speed to control the pillar's horizontal speed
 pillar_interval = 2.0  # Adjust pillar_interval to control the time between pillar spawns
 bird_y_max = field_size - 0.1  # Define the maximum height for the bird
 
@@ -245,9 +245,9 @@ def draw_ray(x, y, a):
     align()
 
 
-def draw_pillar(x, y, a):
+def draw_pillar(x, y):
     move_cursor(x, y)
-    play('pillar' * get_rot_amp(a), 'screen')
+    play('pillar', 'screen')
     align()
 
 
@@ -397,35 +397,16 @@ with program() as game:
         '''
 
         get_inputs(move, act)
-        with if_(move == 1):
-            assign(bird_flap, 1)
-        # with elif_(move == 3):
-        #     assign(ui_phi, -1)
-        # with elif_(move == 4):
-        #     assign(ui_phi, 1)
-
         with if_(act == 5):
-            assign(ui_fire, True)
-        with elif_(act == 10):
-            assign(cont, False)
-
-
-        # move bird
-
+            assign(bird_flap, 1)
 
         # # update the velocity and position
-        # assign(bird_x, bird_x + bird_vx * dt)
-        # assign(bird_y, bird_y + bird_vy * dt)
-        # assign(bird_vx, bird_vx + Math.cos2pi(bird_a) * ui_forward * bird_acceleration * dt)
-        # assign(bird_vy, bird_vy + Math.sin2pi(bird_a) * ui_forward * bird_acceleration * dt)
-        # clip_velocity(bird_vy)
-        # clip_velocity(bird_vx)
-        assign(bird_vx, bird_vx - gravity * dt)
-        assign(bird_x, bird_x + bird_vx * dt)
+        assign(bird_vy, bird_vy - gravity * dt)
+        assign(bird_y, bird_y + bird_vy * dt)
 
         # Handle bird flapping
         with if_(bird_flap == 1):
-            assign(bird_vx, -flap_force)
+            assign(bird_vy, -flap_force)
             assign(bird_flap, 0)
 
         # Spawn pillars
@@ -455,11 +436,6 @@ with program() as game:
                 with if_((get_distance(bird_x, bird_y, pillars_x[j], pillars_y[j]) < R_pillar)):
                     assign(crashed, True)
 
-        # move pillars
-        with for_(j, 0, j < N_pillars, j + 1):
-            with if_(pillars_active[j]):
-                assign(pillars_x[j], pillars_x[j] + Math.cos2pi(pillars_a[j]) * v_pillar * dt)
-                assign(pillars_y[j], pillars_y[j] + Math.sin2pi(pillars_a[j]) * v_pillar * dt)
 
         # process border collisions
         process_border_collisions(bird_x, bird_y)
@@ -470,9 +446,7 @@ with program() as game:
         # draw graphics
         play("marker_pulse", "draw_marker_element")
         draw_bird(bird_x, bird_y, bird_a)
-        with for_(i, 0, i < N_pillars, i + 1):
-            with if_(pillars_active[i]):
-                draw_pillar(pillars_x[i], pillars_y[i], pillars_a[i])
+        draw_pillar(pillar_x, pillar_y)
         draw_border()
 
         # wait until everything is drawn
