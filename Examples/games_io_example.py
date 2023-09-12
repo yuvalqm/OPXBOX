@@ -46,7 +46,7 @@ with program() as io_example:
     cond = declare(bool, value=True)
 
     with while_(cond):
-        wait(int(1e6//4), 'fake')  #  Wait a ms
+        wait(int(1e6 // 4), 'fake')  # Wait a ms
 
         assign(key, IO1)
         with switch_(key):
@@ -97,35 +97,43 @@ qm = qmm.open_qm(config)
 job = qm.execute(io_example)
 res = job.result_handles
 
-while res.is_processing():
-    with keyboard.Events() as events:
-        for event in events:
-            # nothing: 0
-            # w: 1
-            # s: 2
-            # a: 3
-            # d: 4
-            # space: 5
-            # left crtl: 6
-            # escape: 99
-            if type(event) is events.Press:
-                if event.key == keyboard.Key.esc:
-                    qm.set_io1_value(99)
-                    break
-                elif event.key == keyboard.Key.space:
-                    qm.set_io1_value(5)
-                elif event.key == keyboard.Key.ctrl_l:
-                    qm.set_io1_value(6)
-                elif event.key == keyboard.KeyCode.from_char('w'):
-                    qm.set_io1_value(1)
-                elif event.key == keyboard.KeyCode.from_char('s'):
-                    qm.set_io1_value(2)
-                elif event.key == keyboard.KeyCode.from_char('a'):
-                    qm.set_io1_value(3)
-                elif event.key == keyboard.KeyCode.from_char('d'):
-                    qm.set_io1_value(4)
-                else:
-                    pass
+
+def send_over_io(io_num, value, set_value):
+    if not set_value:
+        value = 0
+    if io_num == 1:
+        qm.set_io1_value(value)
+    elif io_num == 2:
+        qm.set_io2_value(value)
+
+
+with keyboard.Events() as events:
+    for event in events:
+        # nothing: 0
+        # w: 1
+        # s: 2
+        # a: 3
+        # d: 4
+        # space: 5
+        # left crtl: 6
+        # escape: 99
+        if event.key == keyboard.Key.esc:
+            send_over_io(1, 99, type(event) is events.Press)
+            break
+        elif event.key == keyboard.Key.space:
+            send_over_io(1, 5, type(event) is events.Press)
+        elif event.key == keyboard.Key.ctrl_l:
+            send_over_io(1, 6, type(event) is events.Press)
+        elif event.key == keyboard.KeyCode.from_char('w'):
+            send_over_io(1, 1, type(event) is events.Press)
+        elif event.key == keyboard.KeyCode.from_char('s'):
+            send_over_io(1, 2, type(event) is events.Press)
+        elif event.key == keyboard.KeyCode.from_char('a'):
+            send_over_io(1, 3, type(event) is events.Press)
+        elif event.key == keyboard.KeyCode.from_char('d'):
+            send_over_io(1, 4, type(event) is events.Press)
+        else:
+            pass
 
 a = res.pressed_keys.fetch_all()
 print(a)
