@@ -141,7 +141,7 @@ configuration = {
             'length': sprite_length,
             'waveforms': {k: f"{n}_{l}" for k, l in zip(["I", "Q"], ["x", "y"])},
         }
-            for n in ["ship", "asteroid", "ray", "border"]},
+            for n in ["bird", "tube", "border"]},
         "measure_user_input": {
             "operation": "measurement",
             'length': user_input_pulse_length,
@@ -158,16 +158,12 @@ configuration = {
     },
     'waveforms': {
         **{
-            f"ship_{a}": {'type': 'arbitrary', 'samples': v}
+            f"bird_{a}": {'type': 'arbitrary', 'samples': v}
             for a, v in zip(["x", "y"], get_ship_pulse(sprite_length) * field_size * 0.1)
         },
         **{
-            f"asteroid_{a}": {'type': 'arbitrary', 'samples': v}
+            f"tube_{a}": {'type': 'arbitrary', 'samples': v}
             for a, v in zip(["x", "y"], get_bird_pulse(sprite_length) * R_asteroid*2)
-        },
-        **{
-            f"ray_{a}": {'type': 'arbitrary', 'samples': v}
-            for a, v in zip(["x", "y"], get_ray_pulse(sprite_length) * field_size * 0.05)
         },
         **{
             f"border_{a}": {'type': 'arbitrary', 'samples': v}
