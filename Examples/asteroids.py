@@ -11,7 +11,7 @@ from sprites import *
 # TODO implement some smaller programs for testing.
 # TODO fix the units of the measurement
 
-debug = True
+debug = False
 
 # the size of the field
 # The objects on the field will be able to move in the range of +-1*field_size.
