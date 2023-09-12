@@ -56,31 +56,38 @@ with program() as io_example:
                 save(key, pressed_keys)
                 assign(IO1, 0)
                 assign(key, 0)
+                wait(int(60 // 4), 'fake')
             with case_(2):  # s
                 save(key, pressed_keys)
                 assign(IO1, 0)
                 assign(key, 0)
+                wait(int(60 // 4), 'fake')
             with case_(3):  # a
                 save(key, pressed_keys)
                 assign(IO1, 0)
                 assign(key, 0)
+                wait(int(60 // 4), 'fake')
             with case_(4):  # d
                 save(key, pressed_keys)
                 assign(IO1, 0)
                 assign(key, 0)
+                wait(int(60 // 4), 'fake')
             with case_(5):  # space
                 save(key, pressed_keys)
                 assign(IO1, 0)
                 assign(key, 0)
+                wait(int(60 // 4), 'fake')
             with case_(6):  # crtl
                 save(key, pressed_keys)
                 assign(IO1, 0)
                 assign(key, 0)
+                wait(int(60 // 4), 'fake')
             with case_(99):  # esc
                 save(key, pressed_keys)
                 assign(IO1, 0)
                 assign(key, 0)
                 assign(cond, False)
+                wait(int(60 // 4), 'fake')
 
     with stream_processing():
         pressed_keys.save_all('pressed_keys')
@@ -120,4 +127,5 @@ while res.is_processing():
                 else:
                     pass
 
-print(res.pressed_keys.fetch_all())
+a = res.pressed_keys.fetch_all()
+print(a)
