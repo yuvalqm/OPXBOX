@@ -91,32 +91,18 @@ def get_border_pulse(points):
 #     y = [item[1] for item in xy]
 #     return resample_trace(x, y, points)
 
-def get_pillar_pulse(points, pillar_height=1):
+def get_pillar_pulse(points, pillar_height=1, reverse=1):
     xy = [
-        (-0.2, -pillar_height),
-        (-0.2, pillar_height),
-        (-0.3, pillar_height),
-        (-0.3, pillar_height + 0.4),
-        (0.3, pillar_height + 0.4),
-        (0.3, pillar_height),
-        (0.2, pillar_height),
-        (0.2, -pillar_height),
+        (-0.2, -pillar_height*reverse),
+        (-0.2, pillar_height*reverse),
+        (-0.3, pillar_height*reverse),
+        (-0.3, (pillar_height + 0.4)*reverse),
+        (0.3, (pillar_height + 0.4)*reverse),
+        (0.3, pillar_height*reverse),
+        (0.2, pillar_height*reverse),
+        (0.2, -pillar_height*reverse),
     ]
 
-    x = [item[0] for item in xy]
-    y = [item[1] for item in xy]
-    return resample_trace(x, y, points)
-def get_reverse_pillar_pulse(points):
-    xy = [
-        (-0.2, 5.6),
-        (-0.2, 4.4),
-        (-0.3, 4.4),
-        (-0.3, 4),
-        (0.3, 4),
-        (0.3, 4.4),
-        (0.2, 4.4),
-        (0.2, 5.6),
-    ]
     x = [item[0] for item in xy]
     y = [item[1] for item in xy]
     return resample_trace(x, y, points)
@@ -204,6 +190,5 @@ def draw_example(pulse):
 if __name__ == '__main__':
     draw_example(get_ship_pulse(100))
     draw_example(get_ray_pulse(100))
-    draw_example(get_reverse_pillar_pulse(100))
     draw_example(get_pillar_pulse(100))
     draw_example(get_border_pulse(100))
