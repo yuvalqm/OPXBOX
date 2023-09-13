@@ -134,6 +134,74 @@ def get_bird_pulse(points):
     y = [item[1]*0.5 for item in xy]
     return resample_trace(x, y, points)
 
+
+def g():
+    xy = [
+        (0.5, 0.5),
+        (-0.5, 0.5),
+        (-0.5, -0.5),
+        (0.5, -0.5),
+        (0.5, 0),
+        (0, 0),
+        (0.5, 0),
+    ]
+
+    return xy
+
+
+def a():
+    xy = [
+        (-0.5, -0.5),
+        (0, 0.5),
+        (0.5, -0.5),
+        (0.25, 0),
+        (-0.25, 0),
+        (0.25, 0),
+    ]
+
+    return xy
+
+
+def m():
+    xy = [
+        (-0.5, -0.5),
+        (-0.25, 0.5),
+        (0, -0.5),
+        (0.25, 0.5),
+        (0.5, -0.5),
+    ]
+
+    return xy
+
+
+def e():
+    xy = [
+        (-0.5, 0.5),
+        (0.5, 0.5),
+        (-0.5, 0.5),
+        (-0.5, 0),
+        (0.5, 0),
+        (-0.5, 0),
+        (-0.5, -0.5),
+        (0.5, -0.5),
+    ]
+
+    return xy
+
+
+def get_word_pulse(points, letters):
+    xy = []
+
+    for i, letter in enumerate(letters):
+        to_add = 0 if i == 0 else i * 1.25
+        xy += [(item[0] + to_add, item[1]) for item in letter]
+
+    x = [item[0] for item in xy]
+    y = [item[1] for item in xy]
+    return resample_trace(x, y, points)
+
+
+
 def draw_example(pulse):
 	plt.plot(*pulse)
 	plt.show()
