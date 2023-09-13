@@ -352,6 +352,7 @@ with program() as game:
     ui_fire = declare(bool, False)
 
     cont = declare(bool, True)
+    game_is_on = declare(bool, True)
     crashed = declare(bool,False)
 
     if debug:
