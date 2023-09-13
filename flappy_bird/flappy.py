@@ -112,9 +112,13 @@ configuration = {
             },
             'operations': {
                 "bird": "bird",
-                "pillar": "pillar",
+                "pillar_short": "pillar_short",
+                "pillar_medium": "pillar_medium",
+                "pillar_long": "pillar_long",
                 "border": "border",
-                "opillar": "opillar"
+                "r_pillar_short": "r_pillar_short",
+                "r_pillar_medium": "r_pillar_medium",
+                "r_pillar_long": "r_pillar_long",
             },
         },
         'draw_marker_element': {
@@ -148,7 +152,7 @@ configuration = {
             'length': sprite_length,
             'waveforms': {k: f"{n}_{l}" for k, l in zip(["I", "Q"], ["x", "y"])},
         }
-            for n in ["bird", "pillar", "border", "opillar"]},
+            for n in ["bird", "pillar_short", "pillar_medium", "pillar_long", "border", "r_pillar_short", "r_pillar_medium", "r_pillar_long"]},
         "measure_user_input": {
             "operation": "measurement",
             'length': user_input_pulse_length,
@@ -169,16 +173,32 @@ configuration = {
             for a, v in zip(["x", "y"], get_bird_pulse(sprite_length) * field_size * 0.1)
         },
         **{
-            f"pillar_{a}": {'type': 'arbitrary', 'samples': v}
-            for a, v in zip(["x", "y"], get_pillar_pulse(sprite_length, 1) * R_pillar*2)
+            f"pillar_short_{a}": {'type': 'arbitrary', 'samples': v}
+            for a, v in zip(["x", "y"], get_pillar_pulse(sprite_length, 2) * R_pillar*2)
+        },
+        **{
+            f"pillar_medium_{a}": {'type': 'arbitrary', 'samples': v}
+            for a, v in zip(["x", "y"], get_pillar_pulse(sprite_length, 3) * R_pillar*2)
+        },
+        **{
+            f"pillar_long_{a}": {'type': 'arbitrary', 'samples': v}
+            for a, v in zip(["x", "y"], get_pillar_pulse(sprite_length, 4) * R_pillar*2)
         },
         **{
             f"border_{a}": {'type': 'arbitrary', 'samples': v}
             for a, v in zip(["x", "y"], get_border_pulse(sprite_length) * field_size)
         },
         **{
-            f"opillar_{a}": {'type': 'arbitrary', 'samples': v}
-            for a, v in zip(["x", "y"], get_reverse_pillar_pulse(sprite_length) * R_pillar*2)
+            f"r_pillar_short_{a}": {'type': 'arbitrary', 'samples': v}
+            for a, v in zip(["x", "y"], get_pillar_pulse(sprite_length, 2, -1) * R_pillar*2)
+        },
+        **{
+            f"r_pillar_medium_{a}": {'type': 'arbitrary', 'samples': v}
+            for a, v in zip(["x", "y"], get_pillar_pulse(sprite_length, 3, -1) * R_pillar*2)
+        },
+        **{
+            f"r_pillar_long_{a}": {'type': 'arbitrary', 'samples': v}
+            for a, v in zip(["x", "y"], get_pillar_pulse(sprite_length, 4, -1) * R_pillar*2)
         },
         # 'marker_wf': {'type':'arbitrary', 'samples':[.1]*50+[0]*50},
         'marker_wf': {"type": "constant", "sample": 0.2},
@@ -239,10 +259,6 @@ def draw_bird(x, y, a):
     play('bird' * get_rot_amp(a), 'screen')
     align()
 
-def draw_pillar(x, y, a):
-    move_cursor(x, y)
-    play('bird' * get_rot_amp(a), 'screen')
-    align()
 
 def draw_ray(x, y, a):
     move_cursor(x, y)
@@ -250,14 +266,25 @@ def draw_ray(x, y, a):
     align()
 
 
-def draw_pillar(x, y):
+def draw_pillar(x, y, length):
     move_cursor(x, y)
-    play('pillar', 'screen')
+    if length == 1:
+        play('pillar_short', 'screen')
+    if length == 2:
+        play('pillar_medium', 'screen')
+    if length == 3:
+        play('pillar_long', 'screen')
     align()
 
-def draw_reverse_pillar(x, y):
+
+def draw_reverse_pillar(x, y, length):
     move_cursor(x, y)
-    play('opillar', 'screen')
+    if length == 1:
+        play('r_pillar_short', 'screen')
+    if length == 2:
+        play('r_pillar_medium', 'screen')
+    if length == 3:
+        play('r_pillar_long', 'screen')
     align()
 
 
@@ -356,7 +383,7 @@ with program() as game:
     # Add variables to keep track of game state
     bird_flap = declare(int, 0)  # Variable to track if the player flaps
     pillar_x = declare(fixed, field_size)  # Initial horizontal position of the pillars
-    pillar_y = declare(fixed, 0)  # Vertical position of the pillars
+    pillar_y = declare(fixed, -0.2)  # Vertical position of the pillars
     pillar_gap = 0.1  # Adjust pillar_gap to control the gap between pillars
     score = declare(int, 0)  # Player's score
     game_over = declare(bool, False)  # Flag to indicate game over
@@ -428,6 +455,8 @@ with program() as game:
 
         # Move pillars
         assign(pillar_x, pillar_x - pillar_speed * dt)
+        # assign(pillar_y, pillar_y - pillar_speed * dt)
+        # assign(pillar_y, -5)
 
         # Check for collisions
         # with if_(bird_y > bird_y_max or bird_y < -bird_y_max):
@@ -458,32 +487,64 @@ with program() as game:
         # draw graphics
         play("marker_pulse", "draw_marker_element")
         draw_bird(bird_x, bird_y, bird_a)
-        draw_pillar(pillar_x, pillar_y)
-        draw_reverse_pillar(pillar_x, -pillar_y * 2)
-        draw_pillar(pillar_x + pillar_gap, pillar_y)
-        draw_reverse_pillar(pillar_x + pillar_gap, -pillar_y * 2)
-        draw_pillar(pillar_x + 2*pillar_gap, pillar_y)
-        draw_reverse_pillar(pillar_x + 2*pillar_gap, -pillar_y * 2)
-        draw_pillar(pillar_x + 3 * pillar_gap, pillar_y * 3)
-        draw_reverse_pillar(pillar_x + 3 * pillar_gap, -pillar_y * 6)
-        draw_pillar(pillar_x + 4 * pillar_gap, pillar_y * 4)
-        draw_reverse_pillar(pillar_x + 4 * pillar_gap, -pillar_y * 8)
-        draw_pillar(pillar_x + 4 * pillar_gap, pillar_y)
-        draw_reverse_pillar(pillar_x + 4 * pillar_gap, -pillar_y * 2)
-        draw_pillar(pillar_x + 5 * pillar_gap, pillar_y)
-        draw_reverse_pillar(pillar_x + 5 * pillar_gap, -pillar_y * 2)
-        draw_pillar(pillar_x + 6 * pillar_gap, pillar_y)
-        draw_reverse_pillar(pillar_x + 6 * pillar_gap, -pillar_y * 2)
-        draw_pillar(pillar_x + 7 * pillar_gap, pillar_y)
-        draw_reverse_pillar(pillar_x + 7 * pillar_gap, -pillar_y * 2)
-        draw_pillar(pillar_x + 8 * pillar_gap, pillar_y)
-        draw_reverse_pillar(pillar_x + 8 * pillar_gap, -pillar_y * 2)
-        draw_pillar(pillar_x + 9 * pillar_gap, pillar_y)
-        draw_reverse_pillar(pillar_x + 9 * pillar_gap, -pillar_y * 2)
-        draw_pillar(pillar_x + 10 * pillar_gap, pillar_y)
-        draw_reverse_pillar(pillar_x + 10 * pillar_gap, -pillar_y * 2)
-        draw_pillar(pillar_x + 11 * pillar_gap, pillar_y)
-        draw_reverse_pillar(pillar_x + 11 * pillar_gap, -pillar_y * 2)
+
+        draw_pillar(pillar_x, pillar_y, 1)
+        draw_reverse_pillar(pillar_x, -pillar_y * 2, 3)
+
+        draw_pillar(pillar_x + pillar_gap, pillar_y, 2)
+        draw_reverse_pillar(pillar_x + pillar_gap, -pillar_y * 2, 2)
+
+        draw_pillar(pillar_x + 2 * pillar_gap, pillar_y, 3)
+        draw_reverse_pillar(pillar_x + 2 * pillar_gap, -pillar_y * 2, 1)
+
+        draw_pillar(pillar_x + 3 * pillar_gap, pillar_y, 3)
+        draw_reverse_pillar(pillar_x + 3 * pillar_gap, -pillar_y * 2, 1)
+
+        draw_pillar(pillar_x + 4 * pillar_gap, pillar_y, 2)
+        draw_reverse_pillar(pillar_x + 4 * pillar_gap, -pillar_y * 2, 2)
+
+        draw_pillar(pillar_x + 5 * pillar_gap, pillar_y, 3)
+        draw_reverse_pillar(pillar_x + 5 * pillar_gap, -pillar_y * 2, 1)
+
+        draw_pillar(pillar_x + 6 * pillar_gap, pillar_y, 1)
+        draw_reverse_pillar(pillar_x + 6 * pillar_gap, -pillar_y * 2, 3)
+
+        draw_pillar(pillar_x + 7 * pillar_gap, pillar_y, 2)
+        draw_reverse_pillar(pillar_x + 7 * pillar_gap, -pillar_y * 2, 2)
+
+        draw_pillar(pillar_x + 8 * pillar_gap, pillar_y, 1)
+        draw_reverse_pillar(pillar_x + 8 * pillar_gap, -pillar_y * 2, 3)
+
+        draw_pillar(pillar_x + 9 * pillar_gap, pillar_y, 3)
+        draw_reverse_pillar(pillar_x + 9 * pillar_gap, -pillar_y * 2, 1)
+
+        # draw_pillar(pillar_x + 10 * pillar_gap, pillar_y, 3)
+        # draw_reverse_pillar(pillar_x + 10 * pillar_gap, -pillar_y * 2, 1)
+
+        # draw_pillar(pillar_x + 11 * pillar_gap, pillar_y, 2)
+        # draw_reverse_pillar(pillar_x + 11 * pillar_gap, -pillar_y * 2, 2)
+
+
+        # draw_pillar(pillar_x + 3 * pillar_gap, pillar_y * 3)
+        # draw_reverse_pillar(pillar_x + 3 * pillar_gap, -pillar_y * 6)
+        # draw_pillar(pillar_x + 4 * pillar_gap, pillar_y * 4)
+        # draw_reverse_pillar(pillar_x + 4 * pillar_gap, -pillar_y * 8)
+        # draw_pillar(pillar_x + 4 * pillar_gap, pillar_y)
+        # draw_reverse_pillar(pillar_x + 4 * pillar_gap, -pillar_y * 2)
+        # draw_pillar(pillar_x + 5 * pillar_gap, pillar_y)
+        # draw_reverse_pillar(pillar_x + 5 * pillar_gap, -pillar_y * 2)
+        # draw_pillar(pillar_x + 6 * pillar_gap, pillar_y)
+        # draw_reverse_pillar(pillar_x + 6 * pillar_gap, -pillar_y * 2)
+        # draw_pillar(pillar_x + 7 * pillar_gap, pillar_y)
+        # draw_reverse_pillar(pillar_x + 7 * pillar_gap, -pillar_y * 2)
+        # draw_pillar(pillar_x + 8 * pillar_gap, pillar_y)
+        # draw_reverse_pillar(pillar_x + 8 * pillar_gap, -pillar_y * 2)
+        # draw_pillar(pillar_x + 9 * pillar_gap, pillar_y)
+        # draw_reverse_pillar(pillar_x + 9 * pillar_gap, -pillar_y * 2)
+        # draw_pillar(pillar_x + 10 * pillar_gap, pillar_y)
+        # draw_reverse_pillar(pillar_x + 10 * pillar_gap, -pillar_y * 2)
+        # draw_pillar(pillar_x + 11 * pillar_gap, pillar_y)
+        # draw_reverse_pillar(pillar_x + 11 * pillar_gap, -pillar_y * 2)
         draw_border()
 
         # wait until everything is drawn
