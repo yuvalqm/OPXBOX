@@ -82,7 +82,20 @@ def get_pillar_pulse(points):
     x = [item[0] for item in xy]
     y = [item[1] for item in xy]
     return resample_trace(x, y, points)
-
+def get_reverse_pillar_pulse(points):
+    xy = [
+        (-0.2, 5.6),
+        (-0.2, 4.4),
+        (-0.3, 4.4),
+        (-0.3, 4),
+        (0.3, 4),
+        (0.3, 4.4),
+        (0.2, 4.4),
+        (0.2, 5.6),
+    ]
+    x = [item[0] for item in xy]
+    y = [item[1] for item in xy]
+    return resample_trace(x, y, points)
 def get_bird_pulse(points):
     xy = [
         (-0.5, 0.5),
