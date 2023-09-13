@@ -170,7 +170,7 @@ configuration = {
         },
         **{
             f"pillar_{a}": {'type': 'arbitrary', 'samples': v}
-            for a, v in zip(["x", "y"], get_pillar_pulse(sprite_length) * R_pillar*2)
+            for a, v in zip(["x", "y"], get_pillar_pulse(sprite_length, 1) * R_pillar*2)
         },
         **{
             f"border_{a}": {'type': 'arbitrary', 'samples': v}
@@ -363,7 +363,7 @@ with program() as game:
 
     t = declare(fixed, 0)
     t_prim = declare(fixed, 0)
-    t_last_pillar_spawn = declare(fixed, -1.1)
+    t_last_pillar_spawn = declare(fixed, -8)
     dt = declare(fixed, 0)
     i = declare(int, 0)
     j = declare(int, 0)
@@ -375,7 +375,7 @@ with program() as game:
     ui_fire = declare(bool, False)
 
     cont = declare(bool, True)
-    crashed = declare(bool,False)
+    crashed = declare(bool, False)
 
     if debug:
         a_stream = declare_stream()
@@ -450,40 +450,40 @@ with program() as game:
 
 
         # process border collisions
-        process_border_collisions(bird_x, bird_y)
-        with for_(i, 0, i < N_pillars, i + 1):
-            with if_(pillars_active[i]):
-                process_border_collisions(pillars_x[i], pillars_y[i])
+        # process_border_collisions(bird_x, bird_y)
+        # with for_(i, 0, i < N_pillars, i + 1):
+        #     with if_(pillars_active[i]):
+        #         process_border_collisions(pillars_x[i], pillars_y[i])
 
         # draw graphics
         play("marker_pulse", "draw_marker_element")
         draw_bird(bird_x, bird_y, bird_a)
         draw_pillar(pillar_x, pillar_y)
-        draw_reverse_pillar(pillar_x, -pillar_y * 0.015)
+        draw_reverse_pillar(pillar_x, -pillar_y * 2)
         draw_pillar(pillar_x + pillar_gap, pillar_y)
-        draw_reverse_pillar(pillar_x + pillar_gap, -pillar_y * 0.015)
+        draw_reverse_pillar(pillar_x + pillar_gap, -pillar_y * 2)
         draw_pillar(pillar_x + 2*pillar_gap, pillar_y)
-        draw_reverse_pillar(pillar_x + 2*pillar_gap, -pillar_y * 0.015)
-        draw_pillar(pillar_x + 3 * pillar_gap, pillar_y)
-        draw_reverse_pillar(pillar_x + 3 * pillar_gap, -pillar_y * 0.015)
+        draw_reverse_pillar(pillar_x + 2*pillar_gap, -pillar_y * 2)
+        draw_pillar(pillar_x + 3 * pillar_gap, pillar_y * 3)
+        draw_reverse_pillar(pillar_x + 3 * pillar_gap, -pillar_y * 6)
+        draw_pillar(pillar_x + 4 * pillar_gap, pillar_y * 4)
+        draw_reverse_pillar(pillar_x + 4 * pillar_gap, -pillar_y * 8)
         draw_pillar(pillar_x + 4 * pillar_gap, pillar_y)
-        draw_reverse_pillar(pillar_x + 4 * pillar_gap, -pillar_y * 0.015)
-        draw_pillar(pillar_x + 4 * pillar_gap, pillar_y)
-        draw_reverse_pillar(pillar_x + 4 * pillar_gap, -pillar_y * 0.015)
+        draw_reverse_pillar(pillar_x + 4 * pillar_gap, -pillar_y * 2)
         draw_pillar(pillar_x + 5 * pillar_gap, pillar_y)
-        draw_reverse_pillar(pillar_x + 5 * pillar_gap, -pillar_y * 0.015)
+        draw_reverse_pillar(pillar_x + 5 * pillar_gap, -pillar_y * 2)
         draw_pillar(pillar_x + 6 * pillar_gap, pillar_y)
-        draw_reverse_pillar(pillar_x + 6 * pillar_gap, -pillar_y * 0.015)
+        draw_reverse_pillar(pillar_x + 6 * pillar_gap, -pillar_y * 2)
         draw_pillar(pillar_x + 7 * pillar_gap, pillar_y)
-        draw_reverse_pillar(pillar_x + 7 * pillar_gap, -pillar_y * 0.015)
+        draw_reverse_pillar(pillar_x + 7 * pillar_gap, -pillar_y * 2)
         draw_pillar(pillar_x + 8 * pillar_gap, pillar_y)
-        draw_reverse_pillar(pillar_x + 8 * pillar_gap, -pillar_y * 0.015)
+        draw_reverse_pillar(pillar_x + 8 * pillar_gap, -pillar_y * 2)
         draw_pillar(pillar_x + 9 * pillar_gap, pillar_y)
-        draw_reverse_pillar(pillar_x + 9 * pillar_gap, -pillar_y * 0.015)
+        draw_reverse_pillar(pillar_x + 9 * pillar_gap, -pillar_y * 2)
         draw_pillar(pillar_x + 10 * pillar_gap, pillar_y)
-        draw_reverse_pillar(pillar_x + 10 * pillar_gap, -pillar_y * 0.015)
+        draw_reverse_pillar(pillar_x + 10 * pillar_gap, -pillar_y * 2)
         draw_pillar(pillar_x + 11 * pillar_gap, pillar_y)
-        draw_reverse_pillar(pillar_x + 11 * pillar_gap, -pillar_y * 0.015)
+        draw_reverse_pillar(pillar_x + 11 * pillar_gap, -pillar_y * 2)
         draw_border()
 
         # wait until everything is drawn

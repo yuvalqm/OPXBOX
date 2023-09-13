@@ -75,23 +75,37 @@ def get_border_pulse(points):
     return resample_trace(x, y, points) * 2 - 1
 
 
-def get_pillar_pulse(points):
+# def get_pillar_pulse(points):
+#     xy = [
+#         (-0.2, -0.6),
+#         (-0.2, 0.6),
+#         (-0.3, 0.6),
+#         (-0.3, 1),
+#         (0.3, 1),
+#         (0.3, 0.6),
+#         (0.2, 0.6),
+#         (0.2, -0.6),
+#     ]
+#
+#     x = [item[0] for item in xy]
+#     y = [item[1] for item in xy]
+#     return resample_trace(x, y, points)
+
+def get_pillar_pulse(points, pillar_height=1):
     xy = [
-        (-0.2, -0.6),
-        (-0.2, 0.6),
-        (-0.3, 0.6),
-        (-0.3, 1),
-        (0.3, 1),
-        (0.3, 0.6),
-        (0.2, 0.6),
-        (0.2, -0.6),
+        (-0.2, -pillar_height),
+        (-0.2, pillar_height),
+        (-0.3, pillar_height),
+        (-0.3, pillar_height + 0.4),
+        (0.3, pillar_height + 0.4),
+        (0.3, pillar_height),
+        (0.2, pillar_height),
+        (0.2, -pillar_height),
     ]
 
     x = [item[0] for item in xy]
     y = [item[1] for item in xy]
     return resample_trace(x, y, points)
-
-
 def get_reverse_pillar_pulse(points):
     xy = [
         (-0.2, 5.6),
