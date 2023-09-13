@@ -298,6 +298,7 @@ def get_inputs(move, act):
     The inputs
     IO1
     w - forward
+    s - backward
     a - left
     d - right
 
@@ -375,6 +376,7 @@ with program() as game:
         '''
         The inputs
         w - forward
+        s - backward
         a - left
         d - right
         
@@ -385,6 +387,8 @@ with program() as game:
             get_inputs(move, act)
             with if_(move == 1):
                 assign(ui_forward, 1)
+            with elif_(move == 2):
+                assign(ui_forward,-1)
             with elif_(move == 3):
                 assign(ui_phi, -1)
             with elif_(move == 4):
@@ -437,8 +441,8 @@ with program() as game:
                     with if_((get_distance(ship_x, ship_y, asteroids_x[j], asteroids_y[j]) < R_asteroid)):
                         assign(crashed, True)
 
-            with if_(crashed):
-                assign(game_is_on, False)
+            #with if_(crashed == True):
+                #assign(game_is_on, False)
                 
             # move rays
             with for_(i, 0, i < N_rays, i + 1):
@@ -485,7 +489,7 @@ with program() as game:
             align()
 
             wait(int(wait_time))
-
+ 
             # update time
             assign(t, t + time_step_size)
 
@@ -494,8 +498,8 @@ with program() as game:
                 a_stream.save_all('move')
                 b_stream.save_all('act')
                 
-    with if_(act == 5 & game_is_on == False):
-        assign(game_is_on, True)
+    #with if_((act == 5) & (game_is_on == False)):
+        #assign(game_is_on, True)
         
 # %%
 
