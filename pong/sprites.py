@@ -48,11 +48,165 @@ def get_ship_pulse(points):
     return resample_trace(x, y, points)
 
 
-def get_ray_pulse(points):
-    x = [-.5, .5]
-    y = [0, 0]
+def g():
+    xy = [
+        (0.5, 0.5),
+        (-0.5, 0.5),
+        (-0.5, -0.5),
+        (0.5, -0.5),
+        (0.5, 0),
+        (0, 0),
+        (0.5, 0),
+        (0.5, -0.5),
+    ]
+
+    return xy
+
+
+def a():
+    xy = [
+        (-0.5, -0.5),
+        (0, 0.5),
+        (0.5, -0.5),
+        (0.25, 0),
+        (-0.25, 0),
+        (0.25, 0),
+        (0.5, -0.5),
+    ]
+
+    return xy
+
+
+def m():
+    xy = [
+        (-0.5, -0.5),
+        (-0.25, 0.5),
+        (0, -0.5),
+        (0.25, 0.5),
+        (0.5, -0.5),
+    ]
+
+    return xy
+
+
+def e1():
+    xy = [
+        (-0.5, -0.5),
+        (-0.5, 0.5),
+        (0.5, 0.5),
+        (-0.5, 0.5),
+        (-0.5, 0),
+        (0.5, 0),
+        (-0.5, 0),
+        (-0.5, -0.5),
+        (0.5, -0.5),
+    ]
+
+    return xy
+
+
+def o():
+    xy = [
+        (-0.5, 0.5),
+        (-0.5, -0.5),
+        (0.5, -0.5),
+        (0.5, 0.5),
+        (-0.5, 0.5),
+        (0.5, 0.5),
+    ]
+
+    return xy
+
+
+def v():
+    xy = [
+        (-0.5, 0.5),
+        (0, -0.5),
+        (0.5, 0.5),
+
+    ]
+
+    return xy
+
+
+def e2():
+    xy = [
+        (-0.5, 0.5),
+        (0.5, 0.5),
+        (-0.5, 0.5),
+        (-0.5, 0),
+        (0.5, 0),
+        (-0.5, 0),
+        (-0.5, -0.5),
+        (0.5, -0.5),
+    ]
+
+    return xy
+
+
+def r():
+    xy = [
+        (-0.5, -0.5),
+        (-0.5, 0.5),
+        (0.5, 0.5),
+        (0.5, 0),
+        (-0.5, 0),
+        (0.5, -0.5),
+    ]
+
+    return xy
+
+
+def space():
+    xy = [
+        (-0.5, -0.5),
+        (0.5, -0.5),
+    ]
+
+    return xy
+
+
+def get_word_pulse(points, letters):
+    xy = []
+
+    for i, letter in enumerate(letters):
+        to_add = 0 if i == 0 else i * 1.5
+        xy += [(item[0] + to_add, item[1]) for item in letter]
+
+    x = [item[0] for item in xy]
+    y = [item[1] for item in xy]
     return resample_trace(x, y, points)
 
+def get_word_pulse(points, letters):
+    xy = []
+
+    for i, letter in enumerate(letters):
+        to_add = 0 if i == 0 else i * 1.25
+        xy += [(item[0] + to_add, item[1]) for item in letter]
+
+    x = [item[0] for item in xy]
+    y = [item[1] for item in xy]
+    return resample_trace(x, y, points)
+
+
+def get_ray_pulse(points):
+    # xy = [
+    #     (0, 0.75),
+    #     (0.5, 0.5),
+    #     (0.75, 0),
+    #     (0.5, -0.5),
+    #     (0, -0.75),
+    #     (-0.5, -0.5),
+    #     (-0.75, 0),
+    #     (-0.5, 0.5),
+    #     (0, 0.75),
+    # ]
+    #
+    # x = [item[0] for item in xy] + [item[0] * 0.75 for item in xy] + [item[0] * 0.5 for item in xy]
+    # y = [item[1] for item in xy] + [item[1] * 0.75 for item in xy] + [item[1] * 0.5 for item in xy]
+    y = [-.5, .5]
+    x = [0, 0]
+    return resample_trace(x, y, points)
 
 def get_pong_player_pulse(points):
     y = [-.5, .5]
@@ -156,7 +310,7 @@ def draw_example(pulse):
 
 
 if __name__ == '__main__':
-    draw_example(get_ship_pulse(100))
+    draw_example(get_pong_player_pulse(100))
     draw_example(get_ray_pulse(100))
     draw_example(get_asteroid_pulse(100))
     draw_example(get_border_pulse(100))
