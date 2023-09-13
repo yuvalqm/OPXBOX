@@ -30,7 +30,7 @@ max_ray_age = 2  # s
 ray_spawn_delay = 0.1  # s
 
 # Number of pillars to be spawned
-N_pillars = 10  # 1
+N_pillars = 1  # 1
 
 # radius of the pillars
 R_pillar = field_size * 0.075  # V
@@ -112,8 +112,13 @@ configuration = {
             },
             'operations': {
                 "bird": "bird",
-                "pillar": "pillar",
+                "pillar_short": "pillar_short",
+                "pillar_medium": "pillar_medium",
+                "pillar_long": "pillar_long",
                 "border": "border",
+                "r_pillar_short": "r_pillar_short",
+                "r_pillar_medium": "r_pillar_medium",
+                "r_pillar_long": "r_pillar_long",
             },
         },
         'draw_marker_element': {
@@ -147,7 +152,7 @@ configuration = {
             'length': sprite_length,
             'waveforms': {k: f"{n}_{l}" for k, l in zip(["I", "Q"], ["x", "y"])},
         }
-            for n in ["bird", "pillar", "border"]},
+            for n in ["bird", "pillar_short", "pillar_medium", "pillar_long", "border", "r_pillar_short", "r_pillar_medium", "r_pillar_long"]},
         "measure_user_input": {
             "operation": "measurement",
             'length': user_input_pulse_length,
@@ -168,12 +173,32 @@ configuration = {
             for a, v in zip(["x", "y"], get_bird_pulse(sprite_length) * field_size * 0.1)
         },
         **{
-            f"pillar_{a}": {'type': 'arbitrary', 'samples': v}
-            for a, v in zip(["x", "y"], get_pillar_pulse(sprite_length) * R_pillar*2)
+            f"pillar_short_{a}": {'type': 'arbitrary', 'samples': v}
+            for a, v in zip(["x", "y"], get_pillar_pulse(sprite_length, 2) * R_pillar*2)
+        },
+        **{
+            f"pillar_medium_{a}": {'type': 'arbitrary', 'samples': v}
+            for a, v in zip(["x", "y"], get_pillar_pulse(sprite_length, 3) * R_pillar*2)
+        },
+        **{
+            f"pillar_long_{a}": {'type': 'arbitrary', 'samples': v}
+            for a, v in zip(["x", "y"], get_pillar_pulse(sprite_length, 4) * R_pillar*2)
         },
         **{
             f"border_{a}": {'type': 'arbitrary', 'samples': v}
             for a, v in zip(["x", "y"], get_border_pulse(sprite_length) * field_size)
+        },
+        **{
+            f"r_pillar_short_{a}": {'type': 'arbitrary', 'samples': v}
+            for a, v in zip(["x", "y"], get_pillar_pulse(sprite_length, 2, -1) * R_pillar*2)
+        },
+        **{
+            f"r_pillar_medium_{a}": {'type': 'arbitrary', 'samples': v}
+            for a, v in zip(["x", "y"], get_pillar_pulse(sprite_length, 3, -1) * R_pillar*2)
+        },
+        **{
+            f"r_pillar_long_{a}": {'type': 'arbitrary', 'samples': v}
+            for a, v in zip(["x", "y"], get_pillar_pulse(sprite_length, 4, -1) * R_pillar*2)
         },
         # 'marker_wf': {'type':'arbitrary', 'samples':[.1]*50+[0]*50},
         'marker_wf': {"type": "constant", "sample": 0.2},
@@ -234,10 +259,6 @@ def draw_bird(x, y, a):
     play('bird' * get_rot_amp(a), 'screen')
     align()
 
-def draw_pillar(x, y, a):
-    move_cursor(x, y)
-    play('bird' * get_rot_amp(a), 'screen')
-    align()
 
 def draw_ray(x, y, a):
     move_cursor(x, y)
@@ -245,9 +266,25 @@ def draw_ray(x, y, a):
     align()
 
 
-def draw_pillar(x, y):
+def draw_pillar(x, y, length):
     move_cursor(x, y)
-    play('pillar', 'screen')
+    if length == 1:
+        play('pillar_short', 'screen')
+    if length == 2:
+        play('pillar_medium', 'screen')
+    if length == 3:
+        play('pillar_long', 'screen')
+    align()
+
+
+def draw_reverse_pillar(x, y, length):
+    move_cursor(x, y)
+    if length == 1:
+        play('r_pillar_short', 'screen')
+    if length == 2:
+        play('r_pillar_medium', 'screen')
+    if length == 3:
+        play('r_pillar_long', 'screen')
     align()
 
 
@@ -346,14 +383,14 @@ with program() as game:
     # Add variables to keep track of game state
     bird_flap = declare(int, 0)  # Variable to track if the player flaps
     pillar_x = declare(fixed, field_size)  # Initial horizontal position of the pillars
-    pillar_y = declare(fixed, 0)  # Vertical position of the pillars
-    pillar_gap = 0.2  # Adjust pillar_gap to control the gap between pillars
+    pillar_y = declare(fixed, -0.2)  # Vertical position of the pillars
+    pillar_gap = 0.1  # Adjust pillar_gap to control the gap between pillars
     score = declare(int, 0)  # Player's score
     game_over = declare(bool, False)  # Flag to indicate game over
 
     t = declare(fixed, 0)
     t_prim = declare(fixed, 0)
-    t_last_pillar_spawn = declare(fixed, -1.1)
+    t_last_pillar_spawn = declare(fixed, -8)
     dt = declare(fixed, 0)
     i = declare(int, 0)
     j = declare(int, 0)
@@ -365,7 +402,7 @@ with program() as game:
     ui_fire = declare(bool, False)
 
     cont = declare(bool, True)
-    crashed = declare(bool,False)
+    crashed = declare(bool, False)
 
     if debug:
         a_stream = declare_stream()
@@ -410,12 +447,16 @@ with program() as game:
             assign(bird_flap, 0)
 
         # Spawn pillars
-        with if_(t - t_last_pillar_spawn >= pillar_interval):
-            assign(t_last_pillar_spawn, t)
-            assign(pillar_y, rng.uniform(-field_size + pillar_gap, field_size - pillar_gap))
+        #     def for_(var= N_pillars, init= 1, cond= N_pillars<=11, update= N_pillars + 1):
+        #     for pill in range(1, 11, 1):
+        #         # with if_(t - t_last_pillar_spawn >= pillar_interval):
+        #         #     assign(t_last_pillar_spawn, t)
+        #         assign(pillar_x, rng.uniform(-field_size + pillar_gap, field_size - pillar_gap))
 
         # Move pillars
         assign(pillar_x, pillar_x - pillar_speed * dt)
+        # assign(pillar_y, pillar_y - pillar_speed * dt)
+        # assign(pillar_y, -5)
 
         # Check for collisions
         # with if_(bird_y > bird_y_max or bird_y < -bird_y_max):
@@ -438,15 +479,72 @@ with program() as game:
 
 
         # process border collisions
-        process_border_collisions(bird_x, bird_y)
-        with for_(i, 0, i < N_pillars, i + 1):
-            with if_(pillars_active[i]):
-                process_border_collisions(pillars_x[i], pillars_y[i])
+        # process_border_collisions(bird_x, bird_y)
+        # with for_(i, 0, i < N_pillars, i + 1):
+        #     with if_(pillars_active[i]):
+        #         process_border_collisions(pillars_x[i], pillars_y[i])
 
         # draw graphics
         play("marker_pulse", "draw_marker_element")
         draw_bird(bird_x, bird_y, bird_a)
-        draw_pillar(pillar_x, pillar_y)
+
+        draw_pillar(pillar_x, pillar_y, 1)
+        draw_reverse_pillar(pillar_x, -pillar_y * 2, 3)
+
+        draw_pillar(pillar_x + pillar_gap, pillar_y, 2)
+        draw_reverse_pillar(pillar_x + pillar_gap, -pillar_y * 2, 2)
+
+        draw_pillar(pillar_x + 2 * pillar_gap, pillar_y, 3)
+        draw_reverse_pillar(pillar_x + 2 * pillar_gap, -pillar_y * 2, 1)
+
+        draw_pillar(pillar_x + 3 * pillar_gap, pillar_y, 3)
+        draw_reverse_pillar(pillar_x + 3 * pillar_gap, -pillar_y * 2, 1)
+
+        draw_pillar(pillar_x + 4 * pillar_gap, pillar_y, 2)
+        draw_reverse_pillar(pillar_x + 4 * pillar_gap, -pillar_y * 2, 2)
+
+        draw_pillar(pillar_x + 5 * pillar_gap, pillar_y, 3)
+        draw_reverse_pillar(pillar_x + 5 * pillar_gap, -pillar_y * 2, 1)
+
+        draw_pillar(pillar_x + 6 * pillar_gap, pillar_y, 1)
+        draw_reverse_pillar(pillar_x + 6 * pillar_gap, -pillar_y * 2, 3)
+
+        draw_pillar(pillar_x + 7 * pillar_gap, pillar_y, 2)
+        draw_reverse_pillar(pillar_x + 7 * pillar_gap, -pillar_y * 2, 2)
+
+        draw_pillar(pillar_x + 8 * pillar_gap, pillar_y, 1)
+        draw_reverse_pillar(pillar_x + 8 * pillar_gap, -pillar_y * 2, 3)
+
+        draw_pillar(pillar_x + 9 * pillar_gap, pillar_y, 3)
+        draw_reverse_pillar(pillar_x + 9 * pillar_gap, -pillar_y * 2, 1)
+
+        # draw_pillar(pillar_x + 10 * pillar_gap, pillar_y, 3)
+        # draw_reverse_pillar(pillar_x + 10 * pillar_gap, -pillar_y * 2, 1)
+
+        # draw_pillar(pillar_x + 11 * pillar_gap, pillar_y, 2)
+        # draw_reverse_pillar(pillar_x + 11 * pillar_gap, -pillar_y * 2, 2)
+
+
+        # draw_pillar(pillar_x + 3 * pillar_gap, pillar_y * 3)
+        # draw_reverse_pillar(pillar_x + 3 * pillar_gap, -pillar_y * 6)
+        # draw_pillar(pillar_x + 4 * pillar_gap, pillar_y * 4)
+        # draw_reverse_pillar(pillar_x + 4 * pillar_gap, -pillar_y * 8)
+        # draw_pillar(pillar_x + 4 * pillar_gap, pillar_y)
+        # draw_reverse_pillar(pillar_x + 4 * pillar_gap, -pillar_y * 2)
+        # draw_pillar(pillar_x + 5 * pillar_gap, pillar_y)
+        # draw_reverse_pillar(pillar_x + 5 * pillar_gap, -pillar_y * 2)
+        # draw_pillar(pillar_x + 6 * pillar_gap, pillar_y)
+        # draw_reverse_pillar(pillar_x + 6 * pillar_gap, -pillar_y * 2)
+        # draw_pillar(pillar_x + 7 * pillar_gap, pillar_y)
+        # draw_reverse_pillar(pillar_x + 7 * pillar_gap, -pillar_y * 2)
+        # draw_pillar(pillar_x + 8 * pillar_gap, pillar_y)
+        # draw_reverse_pillar(pillar_x + 8 * pillar_gap, -pillar_y * 2)
+        # draw_pillar(pillar_x + 9 * pillar_gap, pillar_y)
+        # draw_reverse_pillar(pillar_x + 9 * pillar_gap, -pillar_y * 2)
+        # draw_pillar(pillar_x + 10 * pillar_gap, pillar_y)
+        # draw_reverse_pillar(pillar_x + 10 * pillar_gap, -pillar_y * 2)
+        # draw_pillar(pillar_x + 11 * pillar_gap, pillar_y)
+        # draw_reverse_pillar(pillar_x + 11 * pillar_gap, -pillar_y * 2)
         draw_border()
 
         # wait until everything is drawn
