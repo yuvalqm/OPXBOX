@@ -449,7 +449,7 @@ with program() as game:
                     assign(crashed, True)
 
 
-        process border collisions
+        #process border collisions
         process_border_collisions(bird_x, bird_y)
         with for_(i, 0, i < N_pillars, i + 1):
             with if_(pillars_active[i]):
