@@ -381,116 +381,122 @@ with program() as game:
         space - fire
         escape - end game
         '''
+        with while_(game_is_on):
+            get_inputs(move, act)
+            with if_(move == 1):
+                assign(ui_forward, 1)
+            with elif_(move == 3):
+                assign(ui_phi, -1)
+            with elif_(move == 4):
+                assign(ui_phi, 1)
 
-        get_inputs(move, act)
-        with if_(move == 1):
-            assign(ui_forward, 1)
-        with elif_(move == 3):
-            assign(ui_phi, -1)
-        with elif_(move == 4):
-            assign(ui_phi, 1)
-
-        with if_(act == 5):
-            assign(ui_fire, True)
-        with elif_(act == 10):
-            assign(cont, False)
+            with if_(act == 5):
+                assign(ui_fire, True)
+            with elif_(act == 10):
+                assign(cont, False)
 
 
-        # move ship
-        # update the rotation
-        assign(ship_a, ship_a + ui_phi * ship_rotation_speed * dt)
-        clip_angle(ship_a)
+            # move ship
+            # update the rotation
+            assign(ship_a, ship_a + ui_phi * ship_rotation_speed * dt)
+            clip_angle(ship_a)
 
-        # spawn rays
-        with if_(ui_fire):
-            with if_(ray_spawn_delay < t - t_last_ray_spawn):
-                assign(i, Math.argmin(rays_age))
-                assign(rays_active[i], True)
-                assign(rays_age[i], max_ray_age)
-                assign(rays_x[i], ship_x)
-                assign(rays_y[i], ship_y)
-                assign(rays_a[i], ship_a)
-                assign(t_last_ray_spawn, t)
+            # spawn rays
+            with if_(ui_fire):
+                with if_(ray_spawn_delay < t - t_last_ray_spawn):
+                    assign(i, Math.argmin(rays_age))
+                    assign(rays_active[i], True)
+                    assign(rays_age[i], max_ray_age)
+                    assign(rays_x[i], ship_x)
+                    assign(rays_y[i], ship_y)
+                    assign(rays_a[i], ship_a)
+                    assign(t_last_ray_spawn, t)
 
-        # # update the velocity and position
-        assign(ship_x, ship_x + ship_vx * dt)
-        assign(ship_y, ship_y + ship_vy * dt)
-        assign(ship_vx, ship_vx + Math.cos2pi(ship_a) * ui_forward * ship_acceleration * dt)
-        assign(ship_vy, ship_vy + Math.sin2pi(ship_a) * ui_forward * ship_acceleration * dt)
-        clip_velocity(ship_vy)
-        clip_velocity(ship_vx)
+            # # update the velocity and position
+            assign(ship_x, ship_x + ship_vx * dt)
+            assign(ship_y, ship_y + ship_vy * dt)
+            assign(ship_vx, ship_vx + Math.cos2pi(ship_a) * ui_forward * ship_acceleration * dt)
+            assign(ship_vy, ship_vy + Math.sin2pi(ship_a) * ui_forward * ship_acceleration * dt)
+            clip_velocity(ship_vy)
+            clip_velocity(ship_vx)
 
-        # process hits
-        with for_(i, 0, i < N_rays, i + 1):
+            # process hits
+            with for_(i, 0, i < N_rays, i + 1):
+                with for_(j, 0, j < N_asteroids, j + 1):
+                    with if_(rays_active[i] & asteroids_active[j]):
+                        # with if_(ray_hit(rays_x[i], rays_y[i], asteroids_x[j], asteroids_y[j])):
+                        with if_((get_distance(rays_x[i], rays_y[i], asteroids_x[j], asteroids_y[j]) < R_asteroid)):
+                            assign(rays_active[i], False)
+                            assign(rays_age[i], -1)
+                            assign(asteroids_active[j], False)
+
+            # process crashes
             with for_(j, 0, j < N_asteroids, j + 1):
-                with if_(rays_active[i] & asteroids_active[j]):
+                with if_(asteroids_active[j]):
                     # with if_(ray_hit(rays_x[i], rays_y[i], asteroids_x[j], asteroids_y[j])):
-                    with if_((get_distance(rays_x[i], rays_y[i], asteroids_x[j], asteroids_y[j]) < R_asteroid)):
+                    with if_((get_distance(ship_x, ship_y, asteroids_x[j], asteroids_y[j]) < R_asteroid)):
+                        assign(crashed, True)
+
+            with if_(crashed):
+                assign(game_is_on, False)
+                
+            # move rays
+            with for_(i, 0, i < N_rays, i + 1):
+                with if_(rays_active[i]):
+                    # check age
+                    with if_(rays_age[i] > 0):  # the ray is still alive
+                        assign(rays_age[i], rays_age[i] - dt)
+                        # update position
+                        assign(rays_x[i], rays_x[i] + Math.cos2pi(rays_a[i]) * v_ray * dt)
+                        assign(rays_y[i], rays_y[i] + Math.sin2pi(rays_a[i]) * v_ray * dt)
+                    with else_():
                         assign(rays_active[i], False)
-                        assign(rays_age[i], -1)
-                        assign(asteroids_active[j], False)
 
-        # process crashes
-        with for_(j, 0, j < N_asteroids, j + 1):
-            with if_(asteroids_active[j]):
-                # with if_(ray_hit(rays_x[i], rays_y[i], asteroids_x[j], asteroids_y[j])):
-                with if_((get_distance(ship_x, ship_y, asteroids_x[j], asteroids_y[j]) < R_asteroid)):
-                    assign(crashed, True)
+            # move asteroids
+            with for_(j, 0, j < N_asteroids, j + 1):
+                with if_(asteroids_active[j]):
+                    assign(asteroids_x[j], asteroids_x[j] + Math.cos2pi(asteroids_a[j]) * v_asteroid * dt)
+                    assign(asteroids_y[j], asteroids_y[j] + Math.sin2pi(asteroids_a[j]) * v_asteroid * dt)
 
-        # move rays
-        with for_(i, 0, i < N_rays, i + 1):
-            with if_(rays_active[i]):
-                # check age
-                with if_(rays_age[i] > 0):  # the ray is still alive
-                    assign(rays_age[i], rays_age[i] - dt)
-                    # update position
-                    assign(rays_x[i], rays_x[i] + Math.cos2pi(rays_a[i]) * v_ray * dt)
-                    assign(rays_y[i], rays_y[i] + Math.sin2pi(rays_a[i]) * v_ray * dt)
-                with else_():
-                    assign(rays_active[i], False)
+            # process border collisions
+            process_border_collisions(ship_x, ship_y)
+            with for_(i, 0, i < N_rays, i + 1):
+                with if_(rays_active[i]):
+                    process_border_collisions(rays_x[i], rays_y[i])
+            with for_(i, 0, i < N_asteroids, i + 1):
+                with if_(asteroids_active[i]):
+                    process_border_collisions(asteroids_x[i], asteroids_y[i])
 
-        # move asteroids
-        with for_(j, 0, j < N_asteroids, j + 1):
-            with if_(asteroids_active[j]):
-                assign(asteroids_x[j], asteroids_x[j] + Math.cos2pi(asteroids_a[j]) * v_asteroid * dt)
-                assign(asteroids_y[j], asteroids_y[j] + Math.sin2pi(asteroids_a[j]) * v_asteroid * dt)
+            # draw graphics
+            play("marker_pulse", "draw_marker_element")
+            with if_(crashed):
+                draw_asteroid(ship_x, ship_y, ship_a)
+            with else_():
+                draw_ship(ship_x, ship_y, ship_a)
+            with for_(i, 0, i < N_rays, i + 1):
+                with if_(rays_active[i]):
+                    draw_ray(rays_x[i], rays_y[i], rays_a[i])
+            with for_(i, 0, i < N_asteroids, i + 1):
+                with if_(asteroids_active[i]):
+                    draw_asteroid(asteroids_x[i], asteroids_y[i], asteroids_a[i])
+            draw_border()
 
-        # process border collisions
-        process_border_collisions(ship_x, ship_y)
-        with for_(i, 0, i < N_rays, i + 1):
-            with if_(rays_active[i]):
-                process_border_collisions(rays_x[i], rays_y[i])
-        with for_(i, 0, i < N_asteroids, i + 1):
-            with if_(asteroids_active[i]):
-                process_border_collisions(asteroids_x[i], asteroids_y[i])
+            # wait until everything is drawn
+            align()
 
-        # draw graphics
-        play("marker_pulse", "draw_marker_element")
-        with if_(crashed):
-            draw_asteroid(ship_x, ship_y, ship_a)
-        with else_():
-            draw_ship(ship_x, ship_y, ship_a)
-        with for_(i, 0, i < N_rays, i + 1):
-            with if_(rays_active[i]):
-                draw_ray(rays_x[i], rays_y[i], rays_a[i])
-        with for_(i, 0, i < N_asteroids, i + 1):
-            with if_(asteroids_active[i]):
-                draw_asteroid(asteroids_x[i], asteroids_y[i], asteroids_a[i])
-        draw_border()
+            wait(int(wait_time))
 
-        # wait until everything is drawn
-        align()
+            # update time
+            assign(t, t + time_step_size)
 
-        wait(int(wait_time))
-
-        # update time
-        assign(t, t + time_step_size)
-
-    if debug:
-        with stream_processing():
-            a_stream.save_all('move')
-            b_stream.save_all('act')
-
+        if debug:
+            with stream_processing():
+                a_stream.save_all('move')
+                b_stream.save_all('act')
+                
+    with if_(act == 5 & game_is_on == False):
+        assign(game_is_on, True)
+        
 # %%
 
 
