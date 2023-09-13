@@ -177,6 +177,7 @@ def get_word_pulse(points, letters):
     y = [item[1] for item in xy]
     return resample_trace(x, y, points)
 
+
 def get_word_pulse(points, letters):
     xy = []
 
@@ -190,23 +191,10 @@ def get_word_pulse(points, letters):
 
 
 def get_ray_pulse(points):
-    # xy = [
-    #     (0, 0.75),
-    #     (0.5, 0.5),
-    #     (0.75, 0),
-    #     (0.5, -0.5),
-    #     (0, -0.75),
-    #     (-0.5, -0.5),
-    #     (-0.75, 0),
-    #     (-0.5, 0.5),
-    #     (0, 0.75),
-    # ]
-    #
-    # x = [item[0] for item in xy] + [item[0] * 0.75 for item in xy] + [item[0] * 0.5 for item in xy]
-    # y = [item[1] for item in xy] + [item[1] * 0.75 for item in xy] + [item[1] * 0.5 for item in xy]
     y = [-.5, .5]
     x = [0, 0]
     return resample_trace(x, y, points)
+
 
 def get_pong_player_pulse(points):
     y = [-.5, .5]
