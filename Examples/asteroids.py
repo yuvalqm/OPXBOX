@@ -463,13 +463,13 @@ with program() as game:
                             assign(asteroids_active[j], False)
 
             # process crashes
-            with for_(j, 0, j < N_asteroids, j + 1):
-                with if_(asteroids_active[j]):
-                    # with if_(ray_hit(rays_x[i], rays_y[i], asteroids_x[j], asteroids_y[j])):
-                    with if_((get_distance(ship_x, ship_y, asteroids_x[j], asteroids_y[j]) < R_asteroid)):
-                        assign(crashed, True)
-                        assign(game_is_on, False)
-                        assign(asteroids_active[j], True)
+            # with for_(j, 0, j < N_asteroids, j + 1):
+            #     with if_(asteroids_active[j]):
+            #         # with if_(ray_hit(rays_x[i], rays_y[i], asteroids_x[j], asteroids_y[j])):
+            #         with if_((get_distance(ship_x, ship_y, asteroids_x[j], asteroids_y[j]) < R_asteroid)):
+            #             assign(crashed, True)
+            #             assign(game_is_on, False)
+            #             assign(asteroids_active[j], True)
                 
                 
             # move rays
