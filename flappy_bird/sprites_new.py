@@ -160,6 +160,147 @@ def get_bird_pulse(points):
     y = [coord[1] for coord in xy]
     return resample_trace(x, y, points)
 
+def g():
+    xy = [
+        (0.5, 0.5),
+        (-0.5, 0.5),
+        (-0.5, -0.5),
+        (0.5, -0.5),
+        (0.5, 0),
+        (0, 0),
+        (0.5, 0),
+        (0.5, -0.5),
+    ]
+
+    return xy
+
+
+def a():
+    xy = [
+        (-0.5, -0.5),
+        (0, 0.5),
+        (0.5, -0.5),
+        (0.25, 0),
+        (-0.25, 0),
+        (0.25, 0),
+        (0.5, -0.5),
+    ]
+
+    return xy
+
+
+def m():
+    xy = [
+        (-0.5, -0.5),
+        (-0.25, 0.5),
+        (0, -0.5),
+        (0.25, 0.5),
+        (0.5, -0.5),
+    ]
+
+    return xy
+
+
+def e1():
+    xy = [
+        (-0.5, -0.5),
+        (-0.5, 0.5),
+        (0.5, 0.5),
+        (-0.5, 0.5),
+        (-0.5, 0),
+        (0.5, 0),
+        (-0.5, 0),
+        (-0.5, -0.5),
+        (0.5, -0.5),
+    ]
+
+    return xy
+
+
+def o():
+    xy = [
+        (-0.5, 0.5),
+        (-0.5, -0.5),
+        (0.5, -0.5),
+        (0.5, 0.5),
+        (-0.5, 0.5),
+        (0.5, 0.5),
+    ]
+
+    return xy
+
+
+def v():
+    xy = [
+        (-0.5, 0.5),
+        (0, -0.5),
+        (0.5, 0.5),
+
+    ]
+
+    return xy
+
+
+def e2():
+    xy = [
+        (-0.5, 0.5),
+        (0.5, 0.5),
+        (-0.5, 0.5),
+        (-0.5, 0),
+        (0.5, 0),
+        (-0.5, 0),
+        (-0.5, -0.5),
+        (0.5, -0.5),
+    ]
+
+    return xy
+
+
+def r():
+    xy = [
+        (-0.5, -0.5),
+        (-0.5, 0.5),
+        (0.5, 0.5),
+        (0.5, 0),
+        (-0.5, 0),
+        (0.5, -0.5),
+    ]
+
+    return xy
+
+
+def space():
+    xy = [
+        (-0.5, -0.5),
+        (0.5, -0.5),
+    ]
+
+    return xy
+
+
+def get_word_pulse(points, letters):
+    xy = []
+
+    for i, letter in enumerate(letters):
+        to_add = 0 if i == 0 else i * 1.5
+        xy += [(item[0] + to_add, item[1]) for item in letter]
+
+    x = [item[0] for item in xy]
+    y = [item[1] for item in xy]
+    return resample_trace(x, y, points)
+
+
+def get_word_pulse(points, letters):
+    xy = []
+
+    for i, letter in enumerate(letters):
+        to_add = 0 if i == 0 else i * 1.25
+        xy += [(item[0] + to_add, item[1]) for item in letter]
+
+    x = [item[0] for item in xy]
+    y = [item[1] for item in xy]
+    return resample_trace(x, y, points)
+
 def draw_example(pulse):
     plt.plot(pulse[0], pulse[1])
     plt.show()

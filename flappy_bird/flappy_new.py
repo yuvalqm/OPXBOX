@@ -4,7 +4,7 @@ from pynput import keyboard
 
 from qm import QuantumMachinesManager
 from qm.qua import *
-from sprites import *
+from sprites_new import *
 
 # =============================================================================
 # Configuration Parameters
@@ -18,23 +18,22 @@ R_PILLAR = FIELD_SIZE * 0.075  # V, radius of the pillars
 V_PILLAR = 0.02             # V/s, speed of the pillars
 
 # Bird parameters
-BIRD_ACCELERATION = 1.0    # V/s², acceleration when the forward button is pressed
 MAX_SPEED = 0.2              # V/s, maximum bird speed
-BIRD_ROTATION_SPEED = 2.0  # 2*pi/s, rotational speed of the bird
+
 
 # Timing parameters
 TIME_STEP_SIZE = 0.01      # s, time advanced per tick
-USER_INPUT_PULSE_LENGTH = 50000000  # ns, pulse length for user input probing
-SPRITE_LENGTH = 100        # number of samples used to draw sprites
+USER_INPUT_PULSE_LENGTH = 500000  # ns, pulse length for user input probing
+SPRITE_LENGTH = 16500        # number of samples used to draw sprites
 WAIT_TIME = 1e7 / 2        # ns, wait time after drawing sprites
 
 # Controller input parameters
 INPUT_PROBE_VOLTAGE = 0.5  # V, amplitude used to probe the controller
 
 # Additional game parameters
-GRAVITY = 0.01         # Gravity affecting the bird's fall speed
+GRAVITY = 0.3         # Gravity affecting the bird's fall speed
 FLAP_FORCE = -0.2     # Force applied when the bird flaps (controls jump height)
-PILLAR_SPEED = 0.05    # Horizontal speed of pillars
+PILLAR_SPEED = 0.2    # Horizontal speed of pillars
 PILLAR_INTERVAL = 5.0 # Time between pillar spawns
 BIRD_Y_MAX = FIELD_SIZE - 0.1  # Maximum height for the bird
 
@@ -83,6 +82,7 @@ configuration = {
                 "r_pillar_medium": "r_pillar_medium",
                 "r_pillar_long": "r_pillar_long",
                 "blank": "blank",
+                "game_over": "game_over",
             },
         },
         'draw_marker_element': {
@@ -117,7 +117,7 @@ configuration = {
             'waveforms': {k: f"{n}_{l}" for k, l in zip(["I", "Q"], ["x", "y"])},
         } for n in [
             "bird", "pillar_short", "pillar_medium", "pillar_long",
-            "border", "r_pillar_short", "r_pillar_medium", "r_pillar_long"
+            "border", "r_pillar_short", "r_pillar_medium", "r_pillar_long","game_over"
         ]},
         "measure_user_input": {
             "operation": "measurement",
@@ -138,6 +138,7 @@ configuration = {
                 "Q":"blank_wf",
             }
         },
+        
     },
     'waveforms': {
         **{
@@ -179,6 +180,10 @@ configuration = {
             f"r_pillar_long_{a}": {'type': 'arbitrary', 'samples': v}
             for a, v in zip(["x", "y"],
                             get_pillar_pulse(SPRITE_LENGTH, 4, -1) * R_PILLAR * 2)
+        },
+        **{
+            f"game_over_{a}": {'type': 'arbitrary', 'samples': v}
+            for a, v in zip(["x", "y"], get_word_pulse(SPRITE_LENGTH, [g(), a(), m(), e1(), space(), o(), v(), e2(), r()]) * FIELD_SIZE * 0.1)
         },
         'marker_wf': {"type": "constant", "sample": 0.2},
         'input_wf': {"type": "constant", "sample": INPUT_PROBE_VOLTAGE},
@@ -244,6 +249,7 @@ def draw_pillar(x, y, length):
         play('pillar_long', 'screen')
     align()
 
+
 def draw_reverse_pillar(x, y, length):
     move_cursor(x, y)
     if length == 1:
@@ -257,6 +263,11 @@ def draw_reverse_pillar(x, y, length):
 def draw_border():
     move_cursor(0, 0)
     play('border', 'screen')
+    align()
+
+def draw_game_over(x, y):
+    move_cursor(x, y)
+    play('game_over', 'screen')
     align()
 
 def get_distance(ax, ay, bx, by):
@@ -335,6 +346,7 @@ with program() as game:
     pillar_gap = 0.1
     score = declare(int, 0)
     game_over = declare(bool, False)
+    offsety = declare(fixed,0)
 
     t = declare(fixed, 0)
     t_prev = declare(fixed, 0)
@@ -381,9 +393,9 @@ with program() as game:
         # Move pillars
         assign(pillar_x, pillar_x - PILLAR_SPEED * dt)
 
-        # Update score
-        with if_(bird_x > pillar_x):
-            assign(score, score + 1)
+        # randmize pillars height
+        for i in range(N_PILLARS):
+            assign(pillars_y[i], rng.uniform(-0.25, 0.25))
 
         # Check collisions between bird and pillars
         with for_(j, 0, j < N_PILLARS, j + 1):
@@ -391,29 +403,28 @@ with program() as game:
                 with if_(get_distance(bird_x, bird_y, pillars_x[j], pillars_y[j]) < R_PILLAR):
                     assign(crashed, True)
 
+
         # Draw graphics
         play("marker_pulse", "draw_marker_element")
         play("blank", "screen")
-        #  draw_border()
+        with if_(crashed):
+            draw_game_over(-0.15,0)
+        with else_():
+            
+            # draw_border()
+            for i in range(10):
+                offsetx = i * pillar_gap
+                assign(pillar_y, -0.2)
+                # Only draw pillars that are within the visible field.
+                with if_(pillar_x + offsetx < FIELD_SIZE):
+                    length = 3
+                    offsety = np.random.uniform(-0.1, 0.1)
+                    draw_pillar(pillar_x + offsetx, pillar_y+offsety, length)
+                    offsety = np.random.uniform(-0.1, 0.1)
+                    draw_reverse_pillar(pillar_x + offsetx, -(pillar_y * 2)+offsety, length)
 
-        # Optionally, play a trigger pulse to mark the start of the frame.
-        # play("marker_pulse", "draw_marker_element")
-
-        # Draw pillars in a loop to reduce clutter.
-        # Adjust the number of pillars and their lengths as needed.
-        for i in range(10):
-            offset = i * pillar_gap
-            # Only draw pillars that are within the visible field.
-            with if_(pillar_x + offset < FIELD_SIZE):
-                # Here you can choose a pattern for pillar lengths.
-                # For example, alternating lengths for a visually pleasing effect:
-                length = 1 if (i % 3 == 0) else (2 if i % 3 == 1 else 3)
-                draw_pillar(pillar_x + offset, pillar_y, length)
-                # If you want the reverse pillars, you can uncomment the next line:
-                draw_reverse_pillar(pillar_x + offset, -pillar_y * 2, length)
-
-        # Draw the bird last so it appears on top of everything
-        draw_bird(bird_x, bird_y, bird_a)
+            # Draw the bird last so it appears on top of everything
+            draw_bird(bird_x, bird_y, bird_a)
         align()
         wait(int(WAIT_TIME))   
         assign(t, t + TIME_STEP_SIZE)
