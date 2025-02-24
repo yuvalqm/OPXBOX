@@ -5,6 +5,7 @@ from pynput import keyboard
 from qm import QuantumMachinesManager
 from qm.qua import *
 from sprites_new import *
+import random
 
 # =============================================================================
 # Configuration Parameters
@@ -13,7 +14,7 @@ DEBUG = False
 
 # Field and object parameters
 FIELD_SIZE = 0.3           # V, size of the field
-N_PILLARS = 1              # Number of pillars to be spawned
+N_PILLARS = 7                  # Number of pillars to be spawned
 R_PILLAR = FIELD_SIZE * 0.075  # V, radius of the pillars
 V_PILLAR = 0.02             # V/s, speed of the pillars
 
@@ -33,7 +34,7 @@ INPUT_PROBE_VOLTAGE = 0.5  # V, amplitude used to probe the controller
 # Additional game parameters
 GRAVITY = 0.3         # Gravity affecting the bird's fall speed
 FLAP_FORCE = -0.2     # Force applied when the bird flaps (controls jump height)
-PILLAR_SPEED = 0.2    # Horizontal speed of pillars
+PILLAR_SPEED = 0.3    # Horizontal speed of pillars
 PILLAR_INTERVAL = 5.0 # Time between pillar spawns
 BIRD_Y_MAX = FIELD_SIZE - 0.1  # Maximum height for the bird
 
@@ -335,9 +336,9 @@ with program() as game:
     bird_vy = declare(fixed, 0)
 
     pillars_active = declare(bool, value=[True] * N_PILLARS)
-    pillars_x = declare(fixed, value=rng.uniform(-FIELD_SIZE, FIELD_SIZE, N_PILLARS))
-    pillars_y = declare(fixed, value=rng.uniform(0, 0, N_PILLARS))
-    pillars_a = declare(fixed, value=rng.uniform(-0.5, 0.5, N_PILLARS))
+    pillars_y = declare(fixed, value=[random.uniform(-FIELD_SIZE, -FIELD_SIZE) for _ in range(N_PILLARS)])
+    pillars_x = declare(fixed, value=np.linspace(-FIELD_SIZE, FIELD_SIZE, num=N_PILLARS).tolist())
+    pillars_a = declare(fixed, value=np.linspace(-0.2, 0.2, num=N_PILLARS).tolist())
 
     # Game state variables
     bird_flap = declare(int, 0)
@@ -391,37 +392,37 @@ with program() as game:
             assign(bird_flap, 0)
 
         # Move pillars
-        assign(pillar_x, pillar_x - PILLAR_SPEED * dt)
-
-        # randmize pillars height
-        for i in range(N_PILLARS):
-            assign(pillars_y[i], rng.uniform(-0.25, 0.25))
+        for i in range (N_PILLARS):
+            with if_(Math.abs(pillars_x[i]) < FIELD_SIZE):
+                assign(pillars_x[i], pillars_x[i] - PILLAR_SPEED * dt)
+            with else_():
+                # Pillar went off left edge, respawn it on the right
+                # e.g., place it slightly beyond +FIELD_SIZE so it moves in
+                assign(pillars_x[i], FIELD_SIZE-0.0001)  
+                assign(pillars_y[i], -FIELD_SIZE + Random().rand_fixed() *0.1)
 
         # Check collisions between bird and pillars
         with for_(j, 0, j < N_PILLARS, j + 1):
             with if_(pillars_active[j]):
-                with if_(get_distance(bird_x, bird_y, pillars_x[j], pillars_y[j]) < R_PILLAR):
-                    assign(crashed, True)
+                with if_(((bird_y < (pillars_y[j] + 5*R_PILLAR)) | (bird_y > (- pillars_y[j] - 5*R_PILLAR)))):
+                    with if_((bird_x-pillars_x[j] <  3*R_PILLAR)):
+                        assign(crashed, True)
 
 
         # Draw graphics
         play("marker_pulse", "draw_marker_element")
-        play("blank", "screen")
+        
         with if_(crashed):
             draw_game_over(-0.15,0)
         with else_():
-            
+            play("blank", "screen")
             # draw_border()
-            for i in range(10):
-                offsetx = i * pillar_gap
-                assign(pillar_y, -0.2)
+            for i in range(N_PILLARS):
                 # Only draw pillars that are within the visible field.
-                with if_(pillar_x + offsetx < FIELD_SIZE):
+                with if_(pillars_x[i] < FIELD_SIZE):
                     length = 3
-                    offsety = np.random.uniform(-0.1, 0.1)
-                    draw_pillar(pillar_x + offsetx, pillar_y+offsety, length)
-                    offsety = np.random.uniform(-0.1, 0.1)
-                    draw_reverse_pillar(pillar_x + offsetx, -(pillar_y * 2)+offsety, length)
+                    draw_pillar(pillars_x[i], pillars_y[i], length)
+                    draw_reverse_pillar(pillars_x[i], -(pillars_y[i] * 1.5), length)
 
             # Draw the bird last so it appears on top of everything
             draw_bird(bird_x, bird_y, bird_a)
