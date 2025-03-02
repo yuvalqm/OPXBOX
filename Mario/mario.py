@@ -168,7 +168,7 @@ def draw_floor(x, y):
 import random
 
 N_FLOORS = 3
-FIELD_SIZE = 0.5   # must remain within ±0.5 total
+FIELD_SIZE = 0.4   # must remain within ±0.5 total
 TIME_STEP_SIZE = 0.0025
 WAIT_TIME = 2e6    # ns wait each frame
 GRAVITY = 0.5

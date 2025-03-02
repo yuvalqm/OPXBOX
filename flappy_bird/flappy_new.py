@@ -29,7 +29,7 @@ SPRITE_LENGTH = 16500        # number of samples used to draw sprites
 WAIT_TIME = 1e7 / 2        # ns, wait time after drawing sprites
 
 # Controller input parameters
-INPUT_PROBE_VOLTAGE = 0.5  # V, amplitude used to probe the controller
+INPUT_PROBE_VOLTAGE = 0.4  # V, amplitude used to probe the controller
 
 # Additional game parameters
 GRAVITY = 0.3         # Gravity affecting the bird's fall speed
@@ -48,6 +48,15 @@ configuration = {
             "type": "opx1000",
             "fems": {
                 5: {
+                    "type": "LF",
+                    "analog_outputs": {i: {"offset": 0.0} for i in range(1, 9)},
+                    "analog_inputs": {
+                        1: {"offset": 0.0, "gain_db": 0},
+                        2: {"offset": 0.0, "gain_db": 0},
+                    },
+                    "digital_outputs": {i: {} for i in range(1, 8)},
+                },
+                3: {
                     "type": "LF",
                     "analog_outputs": {i: {"offset": 0.0} for i in range(1, 9)},
                     "analog_inputs": {
@@ -97,13 +106,13 @@ configuration = {
         },
         'user_input_element': {
             'singleInput': {
-                'port': ('con1', 5, 4),
+                'port': ('con1', 5, 2),
             },
             'outputs': {
                 'a': ('con1', 5, 1),
                 'b': ('con1', 5, 2),
             },
-            'intermediate_frequency': 0,
+            'intermediate_frequency': 1e3,
             'operations': {
                 "measure_user_input": "measure_user_input",
             },
@@ -435,6 +444,11 @@ with program() as game:
             a_stream.save_all('move')
             b_stream.save_all('act')
 
+
+with program() as controller_debug:
+    with infinite_loop_():
+        play("marker_pulse", "draw_marker_element")
+        play("measure_user_input", "user_input_element")
 # =============================================================================
 # IO and Main Execution
 # =============================================================================
@@ -451,26 +465,31 @@ if __name__ == '__main__':
     res = job.result_handles
 
     print('Game is on!')
-    with keyboard.Events() as events:
-        for event in events:
-            # Mapping keys to actions:
-            # escape: end game (10), space: fire (5), ctrl_l: (6),
-            # w: forward (1), s: (2), a: left (3), d: right (4)
-            if event.key == keyboard.Key.esc:
-                send_over_io(2, 10, type(event) is events.Press)
-                break
-            elif event.key == keyboard.Key.space:
-                send_over_io(2, 5, type(event) is events.Press)
-            elif event.key == keyboard.Key.ctrl_l:
-                send_over_io(2, 6, type(event) is events.Press)
-            elif event.key == keyboard.KeyCode.from_char('w'):
-                send_over_io(1, 1, type(event) is events.Press)
-            elif event.key == keyboard.KeyCode.from_char('s'):
-                send_over_io(1, 2, type(event) is events.Press)
-            elif event.key == keyboard.KeyCode.from_char('a'):
-                send_over_io(1, 3, type(event) is events.Press)
-            elif event.key == keyboard.KeyCode.from_char('d'):
-                send_over_io(1, 4, type(event) is events.Press)
+    ######### Controller input ########
+
+
+
+    ######### Keyboard input ##########
+    # with keyboard.Events() as events:
+    #     for event in events:
+    #         # Mapping keys to actions:
+    #         # escape: end game (10), space: fire (5), ctrl_l: (6),
+    #         # w: forward (1), s: (2), a: left (3), d: right (4)
+    #         if event.key == keyboard.Key.esc:
+    #             send_over_io(2, 10, type(event) is events.Press)
+    #             break
+    #         elif event.key == keyboard.Key.space:
+    #             send_over_io(2, 5, type(event) is events.Press)
+    #         elif event.key == keyboard.Key.ctrl_l:
+    #             send_over_io(2, 6, type(event) is events.Press)
+    #         elif event.key == keyboard.KeyCode.from_char('w'):
+    #             send_over_io(1, 1, type(event) is events.Press)
+    #         elif event.key == keyboard.KeyCode.from_char('s'):
+    #             send_over_io(1, 2, type(event) is events.Press)
+    #         elif event.key == keyboard.KeyCode.from_char('a'):
+    #             send_over_io(1, 3, type(event) is events.Press)
+    #         elif event.key == keyboard.KeyCode.from_char('d'):
+    #             send_over_io(1, 4, type(event) is events.Press)
 
     if DEBUG:
         res.wait_for_all_values()
