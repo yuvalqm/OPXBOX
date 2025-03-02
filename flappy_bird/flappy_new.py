@@ -6,11 +6,13 @@ from qm import QuantumMachinesManager
 from qm.qua import *
 from sprites_new import *
 import random
+import time
 
 # =============================================================================
 # Configuration Parameters
 # =============================================================================
-DEBUG = False
+DEBUG = True
+CONTROLLER = True
 
 # Field and object parameters
 FIELD_SIZE = 0.3           # V, size of the field
@@ -29,7 +31,7 @@ SPRITE_LENGTH = 16500        # number of samples used to draw sprites
 WAIT_TIME = 1e7 / 2        # ns, wait time after drawing sprites
 
 # Controller input parameters
-INPUT_PROBE_VOLTAGE = 0.4  # V, amplitude used to probe the controller
+INPUT_PROBE_VOLTAGE = 0.5  # V, amplitude used to probe the controller
 
 # Additional game parameters
 GRAVITY = 0.3         # Gravity affecting the bird's fall speed
@@ -109,14 +111,13 @@ configuration = {
                 'port': ('con1', 5, 2),
             },
             'outputs': {
-                'a': ('con1', 5, 1),
-                'b': ('con1', 5, 2),
+                'out2': ('con1', 5, 2),
             },
-            'intermediate_frequency': 1e3,
+            'intermediate_frequency': 0,
             'operations': {
                 "measure_user_input": "measure_user_input",
             },
-            'time_of_flight': 100,
+            'time_of_flight': 136,
             'smearing': 0
         },
     },
@@ -132,7 +133,7 @@ configuration = {
         "measure_user_input": {
             "operation": "measurement",
             'length': USER_INPUT_PULSE_LENGTH,
-            "integration_weights": {"constant": "cosine_weights"},
+            "integration_weights": {"cos": "cosine_weights"},
             'waveforms': {"single": "input_wf"},
         },
         "marker_pulse": {
@@ -336,7 +337,7 @@ def get_inputs(move, act):
 # =============================================================================
 rng = np.random.default_rng(seed=1234)
 
-with program() as game:
+with program() as game_keyboard:
     # Declare game variables
     bird_a = declare(fixed, 0)
     bird_x = declare(fixed, 0)
@@ -446,9 +447,15 @@ with program() as game:
 
 
 with program() as controller_debug:
+    I = declare(fixed)
+    I_stream = declare_stream()
+    n=declare(int,0)
     with infinite_loop_():
         play("marker_pulse", "draw_marker_element")
-        play("measure_user_input", "user_input_element")
+        measure("measure_user_input", "user_input_element",None, demod.full("cos", I, "out2"))
+        save(I,I_stream)
+    with stream_processing():
+        I_stream.save('I')
 # =============================================================================
 # IO and Main Execution
 # =============================================================================
@@ -461,41 +468,47 @@ def send_over_io(io_num, value, set_value):
         qm.set_io2_value(value)
 
 if __name__ == '__main__':
-    job = qm.execute(game)
-    res = job.result_handles
 
-    print('Game is on!')
+
+    
     ######### Controller input ########
-
+    # if CONTROLLER:
+    #    job = qm.execute(game_controller) 
+    #    res = job.result_handles
+    #    print('Game is on!')
 
 
     ######### Keyboard input ##########
-    # with keyboard.Events() as events:
-    #     for event in events:
-    #         # Mapping keys to actions:
-    #         # escape: end game (10), space: fire (5), ctrl_l: (6),
-    #         # w: forward (1), s: (2), a: left (3), d: right (4)
-    #         if event.key == keyboard.Key.esc:
-    #             send_over_io(2, 10, type(event) is events.Press)
-    #             break
-    #         elif event.key == keyboard.Key.space:
-    #             send_over_io(2, 5, type(event) is events.Press)
-    #         elif event.key == keyboard.Key.ctrl_l:
-    #             send_over_io(2, 6, type(event) is events.Press)
-    #         elif event.key == keyboard.KeyCode.from_char('w'):
-    #             send_over_io(1, 1, type(event) is events.Press)
-    #         elif event.key == keyboard.KeyCode.from_char('s'):
-    #             send_over_io(1, 2, type(event) is events.Press)
-    #         elif event.key == keyboard.KeyCode.from_char('a'):
-    #             send_over_io(1, 3, type(event) is events.Press)
-    #         elif event.key == keyboard.KeyCode.from_char('d'):
-    #             send_over_io(1, 4, type(event) is events.Press)
+    # if CONTROLLER == False:
+    #     job = qm.execute(game_keyboard)
+    #     res = job.result_handles
+        # with keyboard.Events() as events:
+        #     for event in events:
+        #         # Mapping keys to actions:
+        #         # escape: end game (10), space: fire (5), ctrl_l: (6),
+        #         # w: forward (1), s: (2), a: left (3), d: right (4)
+        #         if event.key == keyboard.Key.esc:
+        #             send_over_io(2, 10, type(event) is events.Press)
+        #             break
+        #         elif event.key == keyboard.Key.space:
+        #             send_over_io(2, 5, type(event) is events.Press)
+        #         elif event.key == keyboard.Key.ctrl_l:
+        #             send_over_io(2, 6, type(event) is events.Press)
+        #         elif event.key == keyboard.KeyCode.from_char('w'):
+        #             send_over_io(1, 1, type(event) is events.Press)
+        #         elif event.key == keyboard.KeyCode.from_char('s'):
+        #             send_over_io(1, 2, type(event) is events.Press)
+        #         elif event.key == keyboard.KeyCode.from_char('a'):
+        #             send_over_io(1, 3, type(event) is events.Press)
+        #         elif event.key == keyboard.KeyCode.from_char('d'):
+        #             send_over_io(1, 4, type(event) is events.Press)
 
     if DEBUG:
-        res.wait_for_all_values()
-        move_data = res.move.fetch_all()
-        act_data = res.act.fetch_all()
-        plt.plot(move_data, label='move')
-        plt.plot(act_data, label='act')
-        plt.legend()
-        plt.show()
+        job = qm.execute(controller_debug)
+        res = job.result_handles
+        print("test_controller")
+        res.I.wait_for_values(1)
+        while res.is_processing():
+            print(res.I.fetch_all())
+            time.sleep(1)
+
