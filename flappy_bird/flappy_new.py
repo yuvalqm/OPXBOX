@@ -446,17 +446,17 @@ with program() as game_keyboard:
             b_stream.save_all('act')
 
 def get_controller_input(I, act):
-    with if_((I > -3.03) & (I < -3.07)):
+    with if_((I > -3.00) & (I < -3.2)):
         assign(act[0], 1)
-    with if_((I > -1.35) & (I < -1.389)):
+    with elif_((I > -1.2) & (I < -1.5)):
         assign(act[1], 1)
-    with if_((I > -0.05) & (I < 0.05)):
+    with elif_((I > -0.1) & (I < 0.1)):
         assign(act[2], 1)
-    with if_((I > -0.5) & (I < 0.4)):
+    with elif_((I > -0.5) & (I < -0.4)):
         assign(act[3], 1)
-    with if_((I > 0.3) & (I < 0.4)):
+    with elif_((I > 0.3) & (I < 0.37)):
         assign(act[4], 1)
-    with if_((I > 0.2) & (I < 0.29)):
+    with elif_((I > 0.2) & (I < 0.29)):
         assign(act[5], 1)
 
 
@@ -538,7 +538,7 @@ if __name__ == '__main__':
         res.act.wait_for_values(1)
         while res.is_processing():
             print(res.act.fetch_all())
-            time.sleep(0.3)
+            time.sleep(1)
 
         # controller keys -> measured I:
         # Nothing: 0.45 - 0.52
