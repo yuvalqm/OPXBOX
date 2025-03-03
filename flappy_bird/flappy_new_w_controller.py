@@ -319,8 +319,8 @@ def clip_velocity(v):
     return clip(v, MAX_SPEED, -MAX_SPEED)
 
 def get_controller_input(I, act):
-    with for_(k,0,k<6,k+1):
-        assign(act[k], 0)
+    for d in range(6):
+        assign(act[d], 0)
     align()
     reset_if_phase("user_input_element")
     measure("measure_user_input", "user_input_element",None, demod.full("cos", I, "out2"))
