@@ -445,17 +445,45 @@ with program() as game_keyboard:
             a_stream.save_all('move')
             b_stream.save_all('act')
 
+def get_controller_input(I, act):
+    with if_((I > -3.03) & (I < -3.07)):
+        assign(act[0], 1)
+    with if_((I > -1.35) & (I < -1.389)):
+        assign(act[1], 1)
+    with if_((I > -0.05) & (I < 0.05)):
+        assign(act[2], 1)
+    with if_((I > -0.5) & (I < 0.4)):
+        assign(act[3], 1)
+    with if_((I > 0.3) & (I < 0.4)):
+        assign(act[4], 1)
+    with if_((I > 0.2) & (I < 0.29)):
+        assign(act[5], 1)
+
 
 with program() as controller_debug:
     I = declare(fixed)
     I_stream = declare_stream()
+    act = declare(int, value = [0,0,0,0,0,0])
+    act_stream = declare_stream()
+    length_s = declare_stream()
+    lens = declare(int,0)
     n=declare(int,0)
     with infinite_loop_():
+        # for k in range(6):
+        #     assign(act[k], 0)
+        reset_if_phase("user_input_element")
         play("marker_pulse", "draw_marker_element")
         measure("measure_user_input", "user_input_element",None, demod.full("cos", I, "out2"))
-        save(I,I_stream)
+        align()
+        get_controller_input(I, act)
+        align()
+        with for_(n,0,n<6,n+1):
+            save(act[n], act_stream)
+        # save(I,I_stream)
     with stream_processing():
-        I_stream.save('I')
+        # I_stream.save('I')
+        act_stream.save_all('act')
+
 # =============================================================================
 # IO and Main Execution
 # =============================================================================
@@ -502,13 +530,24 @@ if __name__ == '__main__':
         #             send_over_io(1, 3, type(event) is events.Press)
         #         elif event.key == keyboard.KeyCode.from_char('d'):
         #             send_over_io(1, 4, type(event) is events.Press)
-
+    
     if DEBUG:
         job = qm.execute(controller_debug)
         res = job.result_handles
         print("test_controller")
-        res.I.wait_for_values(1)
+        res.act.wait_for_values(1)
         while res.is_processing():
-            print(res.I.fetch_all())
-            time.sleep(1)
+            print(res.act.fetch_all())
+            time.sleep(0.3)
+
+        # controller keys -> measured I:
+        # Nothing: 0.45 - 0.52
+        # A: -3.03 - -3.07
+        # B: -1.35 - -1.389
+        # Down: -0.05 - 0.05
+        # Up: -0.5 - -0.4
+        # Left: 0.3 - 0.4
+        # Right: 0.2 - 0.29
+
+    
 
