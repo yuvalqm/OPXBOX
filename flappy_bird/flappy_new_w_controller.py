@@ -318,21 +318,13 @@ def clip_angle(a):
 def clip_velocity(v):
     return clip(v, MAX_SPEED, -MAX_SPEED)
 
-# def get_inputs(move, act):
-#     """
-#     Retrieve user inputs.
-    
-#     IO1: w - forward, a - left, d - right
-#     IO2: space - fire, escape - end game
-#     """
-#     assign(move, IO1)
-#     assign(act, IO2)
-#     if DEBUG:
-#         save(move, a_stream)
-#         save(act, b_stream)
-#     return move, act
-
 def get_controller_input(I, act):
+    with for_(k,0,k<6,k+1):
+        assign(act[k], 0)
+    align()
+    reset_if_phase("user_input_element")
+    measure("measure_user_input", "user_input_element",None, demod.full("cos", I, "out2"))
+    align()
     with if_((I > -3.2) & (I < -3.0)): # A
         assign(act[0], 1)
     with elif_((I > -1.5) & (I < -1.2)): # B
@@ -408,13 +400,6 @@ with program() as game_controller:
         assign(ui_forward, 0)
         assign(ui_fire, False)
         assign(move, 0)
-        # assign(act, 0)
-        with for_(k,0,k<6,k+1):
-            assign(act[k], 0)
-        align()
-        reset_if_phase("user_input_element")
-        measure("measure_user_input", "user_input_element",None, demod.full("cos", I, "out2"))
-        align()
         get_controller_input(I, act)
         align()
         with if_(act[0] == 1):
@@ -498,50 +483,15 @@ with program() as controller_debug:
 # =============================================================================
 # IO and Main Execution
 # =============================================================================
-def send_over_io(io_num, value, set_value):
-    if not set_value:
-        value = 0
-    if io_num == 1:
-        qm.set_io1_value(value)
-    elif io_num == 2:
-        qm.set_io2_value(value)
 
 if __name__ == '__main__':
 
-
-    
     ######## Controller input ########
     if CONTROLLER:
        job = qm.execute(game_controller) 
        res = job.result_handles
        print('Game is on!')
 
-
-    ######### Keyboard input ##########
-    # if CONTROLLER == False:
-    #     job = qm.execute(game_keyboard)
-    #     res = job.result_handles
-        # with keyboard.Events() as events:
-        #     for event in events:
-        #         # Mapping keys to actions:
-        #         # escape: end game (10), space: fire (5), ctrl_l: (6),
-        #         # w: forward (1), s: (2), a: left (3), d: right (4)
-        #         if event.key == keyboard.Key.esc:
-        #             send_over_io(2, 10, type(event) is events.Press)
-        #             break
-        #         elif event.key == keyboard.Key.space:
-        #             send_over_io(2, 5, type(event) is events.Press)
-        #         elif event.key == keyboard.Key.ctrl_l:
-        #             send_over_io(2, 6, type(event) is events.Press)
-        #         elif event.key == keyboard.KeyCode.from_char('w'):
-        #             send_over_io(1, 1, type(event) is events.Press)
-        #         elif event.key == keyboard.KeyCode.from_char('s'):
-        #             send_over_io(1, 2, type(event) is events.Press)
-        #         elif event.key == keyboard.KeyCode.from_char('a'):
-        #             send_over_io(1, 3, type(event) is events.Press)
-        #         elif event.key == keyboard.KeyCode.from_char('d'):
-        #             send_over_io(1, 4, type(event) is events.Press)
-    
     if DEBUG:
         job = qm.execute(controller_debug)
         res = job.result_handles
