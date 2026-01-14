@@ -73,15 +73,30 @@ def get_border_pulse(points):
     return resample_trace(x, y, points) * 2 - 1
 
 def get_pillar_pulse(points, pillar_height=1, reverse=1):
+    # Classic Flappy Bird pipe design with rectangular body and lip at top
+    pipe_width = 0.25
+    lip_width = 0.35
+    lip_height = 0.3
+    
     xy = [
-        (-0.2, -pillar_height * reverse),
-        (-0.2, pillar_height * reverse),
-        (-0.3, pillar_height * reverse),
-        (-0.3, (pillar_height + 0.4) * reverse),
-        (0.3, (pillar_height + 0.4) * reverse),
-        (0.3, pillar_height * reverse),
-        (0.2, pillar_height * reverse),
-        (0.2, -pillar_height * reverse),
+        # Start at bottom left of pipe
+        (-pipe_width, -pillar_height * reverse),
+        # Go up the left side
+        (-pipe_width, pillar_height * reverse),
+        # Expand to lip on left
+        (-lip_width, pillar_height * reverse),
+        # Go up to top of lip on left
+        (-lip_width, (pillar_height + lip_height) * reverse),
+        # Across the top of lip
+        (lip_width, (pillar_height + lip_height) * reverse),
+        # Down right side of lip
+        (lip_width, pillar_height * reverse),
+        # Contract back to pipe width
+        (pipe_width, pillar_height * reverse),
+        # Down the right side of pipe
+        (pipe_width, -pillar_height * reverse),
+        # Across the bottom
+        (-pipe_width, -pillar_height * reverse),
     ]
     x = [coord[0] for coord in xy]
     y = [coord[1] for coord in xy]
@@ -139,25 +154,30 @@ def get_bird2_pulse(points):
     return resample_trace(x, y, points)
 
 def get_bird_pulse(points):
-    xy = [
-        (-0.2, -0.3),
-        (-0.5, -0.5),
-        (-0.8, -0.3),
-        (-1, 0),
-        (-0.8, 0.3),
-        (-0.5, 0.5),
-        (-0.2, 0.3),
-        (0, 0),
-        (-0.2, -0.3),
-        (-0.5, 0),
-        (0, -0.5),
-        (0.25, 0.5),
-        (0.5, -0.5),
-        (0.75, 0.5),
-        (1, -0.5),
-    ]
-    x = [coord[0] for coord in xy]
-    y = [coord[1] for coord in xy]
+    # More circular body like the original Flappy Bird
+    n_body = 20
+    theta_body = np.linspace(0, 2*np.pi, n_body)
+    body_x = 0.4 * np.cos(theta_body) - 0.3
+    body_y = 0.35 * np.sin(theta_body)
+    
+    # Small circular eye
+    n_eye = 8
+    theta_eye = np.linspace(0, 2*np.pi, n_eye)
+    eye_x = 0.08 * np.cos(theta_eye) + 0.05
+    eye_y = 0.08 * np.sin(theta_eye) + 0.15
+    
+    # Triangular beak
+    beak_x = [0.1, 0.6, 0.1, 0.1]
+    beak_y = [0.05, 0, -0.05, 0.05]
+    
+    # Small tail feathers
+    tail_x = [-0.7, -0.9, -0.7, -0.85, -0.7]
+    tail_y = [0.15, 0.2, 0.05, 0, -0.1]
+    
+    # Combine all parts
+    x = np.concatenate([body_x, eye_x, beak_x, tail_x])
+    y = np.concatenate([body_y, eye_y, beak_y, tail_y])
+    
     return resample_trace(x, y, points)
 
 def g():
